@@ -179,10 +179,20 @@ static void put_perm_data(struct perm_data *data)
     kref_put(&data->ref, release_perm_data);
 }
 
+static void migrate_profile(u32 version, struct app_profile *profile);
+
 int ksu_set_app_profile(struct app_profile *profile)
 {
     struct perm_data *p, *np;
     int result = 0;
+
+    if (profile && profile->version < KSU_APP_PROFILE_VER) {
+        u32 orig_ver = profile->version;
+        migrate_profile(orig_ver, profile);
+        if (profile->allow_su) {
+            profile->rp_config.profile.flags = 0; // Clear garbage from stack
+        }
+    }
 
     if (!profile_valid(profile)) {
         pr_err("Failed to set app profile: invalid profile!\n");
