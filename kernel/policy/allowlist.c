@@ -447,7 +447,7 @@ static void migrate_profile(u32 version, struct app_profile *profile)
     case 2:
         if (profile->allow_su) {
             domain = profile->rp_config.profile.selinux_domain;
-            if (strncmp(domain, "u:r:su:s0", domain_len) == 0) {
+            if (domain[0] == '\0' || strncmp(domain, "u:r:su:s0", domain_len) == 0) {
                 memset(domain, 0, domain_len);
                 // domain_len - 1 as implicit null termination
                 strncpy(domain, KSU_DEFAULT_SELINUX_DOMAIN, domain_len - 1);
