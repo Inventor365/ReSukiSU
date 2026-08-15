@@ -49,9 +49,9 @@
     <string name="module_sort_enabled_first">Urutkan (Aktif Terlebih Dahulu)</string>
     <string name="uninstall">Copot Pemasangan</string>
     <string name="install">Pasang</string>
-    <string name="reboot">Muat Ulang</string>
+    <string name="reboot">Mulai Ulang</string>
     <string name="settings">Pengaturan</string>
-    <string name="reboot_soft">Mulai ulang lembut</string>
+    <string name="reboot_soft">Mulai ulang ringan</string>
     <string name="reboot_userspace">Muat Ulang Lunak</string>
     <string name="reboot_recovery">Muat Ulang ke Recovery</string>
     <string name="reboot_bootloader">Muat Ulang ke Bootloader</string>
@@ -112,7 +112,7 @@
     <string name="profile_selinux_context">Konteks SELinux</string>
     <string name="profile_umount_modules">Lepas Kait Modul</string>
     <string name="failed_to_update_app_profile">Gagal memperbarui profil aplikasi untuk %s</string>
-    <string name="debug_version_notice">"Anda menggunakan manajer versi DEBUG, jika Anda tidak tahu apa itu versi DEBUG, segera beralih ke versi RELEASE"</string>
+    <string name="debug_version_notice">Anda menggunakan manajer versi DEBUG, jika Anda tidak tahu apa itu versi DEBUG, segera beralih ke versi RELEASE</string>
     <string name="unofficial_version_notice">"Manajer yang Anda gunakan bukan manajer resmi %s, dan Anda mungkin tidak bisa mendapatkan akses."</string>
     <string name="conflict_with_apatch">Terdeteksi APatch, semuanya mungkin akan berhenti berfungsi.</string>
     <string name="settings_umount_modules_default">Lepas kait modul secara bawaan</string>
@@ -237,7 +237,7 @@ Lanjutkan?</string>
     <string name="simple_mode">Mode Sederhana</string>
     <string name="simple_mode_summary">Menyembunyikan kartu yang tidak perlu saat diaktifkan</string>
     <string name="hide_other_info">Sembunyikan Informasi Lainnya</string>
-    <string name="hide_other_info_summary">Menyembunyikan titik merah yang menunjukkan jumlah superuser, modul, dan modul KPM di halaman navigasi bawah</string>
+    <string name="hide_other_info_summary">Menyembunyikan titik merah yang menunjukkan jumlah superuser dan modul di halaman navigasi bawah</string>
     <string name="hide_susfs_status">Sembunyikan Status SuSFS</string>
     <string name="hide_susfs_status_summary">Menyembunyikan informasi status SuSFS di halaman beranda</string>
     <string name="hide_zygisk_implement">Sembunyikan status Zygisk</string>
@@ -491,4 +491,8 @@ Lanjutkan?</string>
     <string name="manager_update_details">Versi: %1$s (%2$d)\nArsitektur: %3$s</string>
     <string name="settings_check_beta_update">Periksa pembaruan beta</string>
     <string name="settings_check_beta_update_summary">Memeriksa otomatis build beta dari branch utama</string>
+    <string name="susfs_status_enabled_features">Aktifkan Fitur</string>
+    <string name="susfs_standard_uname_version">Versi</string>
+    <string name="susfs_standard_uname_release">Rilis</string>
+    <string name="susfs_standard_uname_tab_manual">Manual</string>
 </resources>
