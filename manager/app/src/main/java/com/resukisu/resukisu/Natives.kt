@@ -31,7 +31,10 @@ object Natives {
     // 35002: add sync set dynamic-manager api
     const val MINIMAL_SUPPORTED_KERNEL = 35002
 
-    const val KERNEL_SU_DOMAIN = "u:r:ksu:s0"
+    // Keep in sync with KERNEL_SU_DOMAIN in kernel/selinux/selinux.h (renamed from
+    // the stock "ksu" to evade SELinux context-name probes). The kernel also remaps
+    // the legacy "u:r:ksu:s0" for backward compatibility.
+    const val KERNEL_SU_DOMAIN = "u:r:sysinit_ext:s0"
 
     const val ROOT_UID = 0
     const val ROOT_GID = 0

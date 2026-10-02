@@ -16,7 +16,10 @@
 #define ALLOWLIST_FILE_HEADER_SIZE 8
 #define ALLOWLIST_MIN_VERSION 2
 #define APP_PROFILE_SIZE_PRE_V4 776
-#define DEFAULT_SELINUX_DOMAIN "u:r:ksu:s0"
+// Keep in sync with KERNEL_SU_DOMAIN in kernel/selinux/selinux.h (renamed from
+// the stock "ksu" to evade SELinux context-name probes). The kernel also remaps
+// the legacy "u:r:ksu:s0" for backward compatibility.
+#define DEFAULT_SELINUX_DOMAIN "u:r:sysinit_ext:s0"
 
 enum allowlist_restore_result {
     ALLOWLIST_RESTORE_SUCCESS = 0,

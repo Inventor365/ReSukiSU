@@ -7,7 +7,9 @@ use jwalk::{Parallelism::Serial, WalkDir};
 use crate::defs;
 
 pub const SYSTEM_CON: &str = "u:object_r:system_file:s0";
-pub const KSU_CON: &str = "u:object_r:ksu_file:s0";
+// Keep in sync with KERNEL_SU_FILE in kernel/selinux/selinux.h (renamed from
+// the stock "ksu_file" to evade SELinux context-name probes).
+pub const KSU_CON: &str = "u:object_r:sysinit_ext_file:s0";
 pub const UNLABEL_CON: &str = "u:object_r:unlabeled:s0";
 
 const SELINUX_XATTR: &str = "security.selinux";

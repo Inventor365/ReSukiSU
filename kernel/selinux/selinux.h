@@ -9,8 +9,15 @@
 #define KSU_COMPAT_USE_SELINUX_STATE
 #endif
 
-#define KERNEL_SU_DOMAIN "ksu"
-#define KERNEL_SU_FILE "ksu_file"
+/*
+ * SELinux domain / file type names for the su domain. Renamed from the stock
+ * "ksu" / "ksu_file" so detectors that probe those literal context names (e.g.
+ * writing u:r:ksu:s0 to /proc/self/attr/current and classifying EPERM vs EINVAL)
+ * see the types as non-existent. Keep these in sync with the ksud userspace
+ * literals in userspace/ksud/src/android/{restorecon.rs,unload.rs}.
+ */
+#define KERNEL_SU_DOMAIN "sysinit_ext"
+#define KERNEL_SU_FILE "sysinit_ext_file"
 
 #define KERNEL_SU_CONTEXT "u:r:" KERNEL_SU_DOMAIN ":s0"
 #define KSU_FILE_CONTEXT "u:object_r:" KERNEL_SU_FILE ":s0"

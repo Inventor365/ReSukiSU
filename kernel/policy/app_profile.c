@@ -242,7 +242,18 @@ int escape_with_root_profile(void)
     }
 
     setup_groups(profile, cred);
-    setup_selinux(profile->selinux_domain, cred);
+    // Backward compatibility: profiles written before the su domain was renamed
+    // (and managers still defaulting to it) carry the literal legacy context
+    // "u:r:ksu:s0", which no longer exists in policy. Map it to the current su
+    // context so existing root grants keep working, without ever materializing the
+    // detectable "ksu" type.
+    {
+        const char *selinux_domain = profile->selinux_domain;
+        if (strcmp(selinux_domain, "u:r:ksu:s0") == 0) {
+            selinux_domain = KERNEL_SU_CONTEXT;
+        }
+        setup_selinux(selinux_domain, cred);
+    }
 
     commit_creds(cred);
 
