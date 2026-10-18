@@ -69,6 +69,17 @@ __maybe_static struct page *fake_status = NULL;
 static struct mutex *ksu_selinux_status_lock = NULL;
 __maybe_static void initialize_fake_status();
 
+#ifdef KSU_COMPAT_HAS_SUSFS_FEATURE_SELINUX_HIDE
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0)
+// In susfs-compat mode BakaSU's own selinux_hide hooks are compiled out and the
+// kernel-side susfs hooks (security/selinux/hooks.c, selinuxfs.c) drive the
+// spoofing instead. Those hooks resolve "extern struct selinux_state fake_state"
+// from this module; provide it here and point it at backup_sepolicy in
+// ksu_selinux_hide_enable(). Mirrors susfs4ksu 10_enable_susfs_for_ksu.patch.
+struct selinux_state fake_state;
+#endif
+#endif // #ifdef KSU_COMPAT_HAS_SUSFS_FEATURE_SELINUX_HIDE
+
 #ifndef KSU_COMPAT_HAS_SUSFS_FEATURE_SELINUX_HIDE
 enum sel_inos {
     SEL_ROOT_INO = 2,
@@ -827,6 +838,14 @@ out:
 #endif // #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
 
 #endif // #ifndef KSU_COMPAT_HAS_SUSFS_FEATURE_SELINUX_HIDE
+
+#ifdef KSU_COMPAT_HAS_SUSFS_FEATURE_SELINUX_HIDE
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0)
+    // Back the kernel-side susfs selinux_hide hooks with backup_sepolicy.
+    fake_state.initialized = true;
+    fake_state.policy = backup_sepolicy;
+#endif
+#endif // #ifdef KSU_COMPAT_HAS_SUSFS_FEATURE_SELINUX_HIDE
 
     return 0;
 
