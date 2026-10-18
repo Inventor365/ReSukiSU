@@ -15,6 +15,9 @@ $(info -- $(REPO_NAME)/compat: ksu_install_su_fd direct call found)
 ccflags-y += -DKSU_COMPAT_HAS_SUSFS_INSTALL_SU_FD_DIRECT_CALL
 endif
 
-$(info -- $(REPO_NAME): susfs has NOT update with latest KernelSU source)
-$(info -- $(REPO_NAME): Please wait simonpunk update)
-$(error Please wait susfs update.)
+# NOTE (Inventor365): BakaSU's upstream $(error "Please wait susfs update.")
+# build block is lifted here. This tree syncs susfs to the latest
+# simonpunk gki-android14-6.1, which is the sync BakaSU was waiting on, so
+# the hard stop no longer applies. The compat probes above still emit the
+# correct -DKSU_COMPAT_* flags for whichever susfs hook style is present.
+$(info -- $(REPO_NAME): susfs synced to latest simonpunk gki-android14-6.1; build block lifted)
