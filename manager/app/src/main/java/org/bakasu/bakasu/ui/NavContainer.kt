@@ -2,6 +2,7 @@ package org.bakasu.bakasu.ui
 
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
@@ -45,6 +46,8 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -55,13 +58,20 @@ import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import kotlin.coroutines.resume
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import org.bakasu.bakasu.R
+import org.bakasu.bakasu.domain.model.CatalogModule
+import org.bakasu.bakasu.domain.model.ModuleReleaseAsset
+import org.bakasu.bakasu.domain.usecase.ExtractModuleIdUseCase
 import org.bakasu.bakasu.ui.activity.PermissionRequestInterface
 import org.bakasu.bakasu.ui.animation.predictiveback.installerNavTransition
+import org.bakasu.bakasu.ui.component.LocalRepositoryModuleInstall
 import org.bakasu.bakasu.ui.navigation.IntentDispatcher
 import org.bakasu.bakasu.ui.navigation.LocalNavigator
 import org.bakasu.bakasu.ui.navigation.Navigator
@@ -75,6 +85,7 @@ import org.bakasu.bakasu.ui.screen.ExecuteModuleActionScreen
 import org.bakasu.bakasu.ui.screen.FlashIt
 import org.bakasu.bakasu.ui.screen.FlashScreen
 import org.bakasu.bakasu.ui.screen.InstallScreen
+import org.bakasu.bakasu.ui.screen.ScriptRunScreen
 import org.bakasu.bakasu.ui.screen.SulogScreen
 import org.bakasu.bakasu.ui.screen.TemplateEditorScreen
 import org.bakasu.bakasu.ui.screen.UmountManagerScreen
@@ -82,6 +93,7 @@ import org.bakasu.bakasu.ui.screen.about.AboutScreen
 import org.bakasu.bakasu.ui.screen.about.OpenSourceLicenseScreen
 import org.bakasu.bakasu.ui.screen.kernelFlash.KernelFlashScreen
 import org.bakasu.bakasu.ui.screen.main.MainScreen
+import org.bakasu.bakasu.ui.screen.moduleRepo.AddRepositoryScreen
 import org.bakasu.bakasu.ui.screen.moduleRepo.ModuleRepoScreen
 import org.bakasu.bakasu.ui.screen.moduleRepo.OnlineModuleDetailScreen
 import org.bakasu.bakasu.ui.screen.susfs.SuSFSConfigScreen
@@ -116,6 +128,7 @@ fun NavContainer(
 ) {
     val themeConfig: ThemeConfig = koinInject()
     val backgroundRenderState = LocalBackgroundRenderState.current
+    val extractModuleId = koinInject<ExtractModuleIdUseCase>()
     val activity = LocalActivity.current as MainActivity
     val context = LocalContext.current
 
@@ -139,6 +152,22 @@ fun NavContainer(
 
     val backStack = rememberNavBackStack<Route>(Route.Main)
     val navigator = remember(backStack) { Navigator(backStack) }
+    val installRepositoryModule: (Uri, CatalogModule, ModuleReleaseAsset, () -> Boolean) -> Unit = { uri, module, asset, canInstall ->
+        activity.lifecycleScope.launch(Dispatchers.IO) {
+            if (!canInstall()) return@launch
+            val moduleId = if (module.isScript) module.moduleId else runCatching { extractModuleId(uri.toString()) }.getOrNull()
+            withContext(Dispatchers.Main) {
+                if (!canInstall()) return@withContext
+                if (module.isScript && asset.expected != null) {
+                    navigator.push(Route.ScriptRun(uri.toString(), module.moduleId, asset.expected.size, asset.expected.sha256, displayName = module.moduleName))
+                } else if (!moduleId.isNullOrBlank() && !module.isScript) {
+                    navigator.push(Route.Flash.modules(listOf(uri.toString())))
+                } else {
+                    Toast.makeText(context, R.string.repo_error_module_archive, Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
     val onBack = remember(navigator) {
         {
             when (val top = navigator.current()) {
@@ -179,7 +208,7 @@ fun NavContainer(
                         suspendCancellableCoroutine { continuation ->
                             currentCallback = { result ->
                                 callback(result.any { it.value })
-                                continuation.resume(Unit)
+                                continuation.resume(Unit) { _, _, _ -> }
                             }
 
                             if (requestDescription.isNotBlank() && ActivityCompat.shouldShowRequestPermissionRationale(
@@ -222,7 +251,7 @@ fun NavContainer(
                                     result[perm] ?: true
                                 }
                                 callback(finalResult)
-                                continuation.resume(Unit)
+                                continuation.resume(Unit) { _, _, _ -> }
                             }
 
                             permissionsToRequest.forEach { perm ->
@@ -257,11 +286,23 @@ fun NavContainer(
         onResult = permissionRequestInterface::onPermissionRequestCallback,
     )
 
+    val uriHandler = LocalUriHandler.current
+
     CompositionLocalProvider(
+        LocalUriHandler provides object : UriHandler {
+            override fun openUri(uri: String) {
+                try {
+                    uriHandler.openUri(uri)
+                } catch (_: IllegalArgumentException) {
+                    Toast.makeText(context, R.string.external_link_open_failed, Toast.LENGTH_SHORT).show()
+                }
+            }
+        },
         LocalOverscrollFactory provides overscrollFactory,
         LocalStretchOverscrollCompensationState provides stretchOverscrollCompensationState,
         LocalPermissionRequestInterface provides permissionRequestInterface,
         LocalNavigator provides navigator,
+        LocalRepositoryModuleInstall provides installRepositoryModule,
         LocalDensity provides density,
     ) {
         IntentDispatcher(intentChannel)
@@ -407,8 +448,26 @@ fun NavContainer(
                     backgroundRenderState = backgroundRenderState,
                     useBlur = useBlur,
                 ) {
-                    OnlineModuleDetailScreen(key.moduleId)
+                    OnlineModuleDetailScreen(key.moduleId, key.repositoryUrl)
                 }
+            }
+            entry<Route.RepositoryModules>(swipeDismiss = swipeBackDirection) { key ->
+                ManagerNavEntry(
+                    interceptPredictiveBack = interceptPredictiveBack,
+                    onBack = onBack,
+                    themeConfig = themeConfig,
+                    backgroundRenderState = backgroundRenderState,
+                    useBlur = useBlur,
+                ) { ModuleRepoScreen(key.repositoryUrl) }
+            }
+            entry<Route.AddRepository>(swipeDismiss = swipeBackDirection) {
+                ManagerNavEntry(
+                    interceptPredictiveBack = interceptPredictiveBack,
+                    onBack = onBack,
+                    themeConfig = themeConfig,
+                    backgroundRenderState = backgroundRenderState,
+                    useBlur = useBlur,
+                ) { AddRepositoryScreen() }
             }
             entry<Route.Install>(swipeDismiss = NavSwipeDirection.None) { key ->
                 ManagerNavEntry(
@@ -430,6 +489,17 @@ fun NavContainer(
                     useBlur = useBlur,
                 ) {
                     FlashScreen(key.toFlashIt())
+                }
+            }
+            entry<Route.ScriptRun>(swipeDismiss = NavSwipeDirection.None) { key ->
+                ManagerNavEntry(
+                    interceptPredictiveBack = interceptPredictiveBack,
+                    onBack = onBack,
+                    themeConfig = themeConfig,
+                    backgroundRenderState = backgroundRenderState,
+                    useBlur = useBlur,
+                ) {
+                    ScriptRunScreen(key)
                 }
             }
             entry<Route.ExecuteModuleAction>(swipeDismiss = swipeBackDirection) { key ->
