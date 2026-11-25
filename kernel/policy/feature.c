@@ -292,6 +292,18 @@ void __init ksu_feature_init(void)
         feature_handlers[i] = NULL;
     }
 
+#ifdef CONFIG_KSU_SELINUX_HIDE_DEFAULT_ON
+    /* Ship selinux_hide forced on, independent of the manager. An explicit
+     * force_feature= cmdline entry (parsed earlier) takes precedence. Applied
+     * and retried by ksu_feature_apply_forced() once the backup policy is up. */
+    if (!test_bit(KSU_FEATURE_SELINUX_HIDE, forced_mask)) {
+        forced_values[KSU_FEATURE_SELINUX_HIDE] = 1;
+        set_bit(KSU_FEATURE_SELINUX_HIDE, forced_mask);
+        set_bit(KSU_FEATURE_SELINUX_HIDE, forced_pending);
+        pr_info("feature: selinux_hide forced on by build config\n");
+    }
+#endif
+
     pr_info("feature: feature management initialized\n");
 }
 
