@@ -84,8 +84,8 @@ config KSU_SELINUX_HIDE_DEFAULT_ON
 	help
 	  Seed the forced-feature table so the selinux_hide feature is
 	  enabled automatically at boot through ksu_feature_apply_forced(),
-	  with no dependency on the userspace manager. Because the feature
-	  is marked forced, the manager can no longer toggle it.
+	  with no dependency on the userspace manager. The feature is NOT
+	  locked, so the manager can still toggle it off.
 
 	  Say Y to ship a kernel with selinux_hide preconfigured on.
 

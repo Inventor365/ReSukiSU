@@ -293,14 +293,16 @@ void __init ksu_feature_init(void)
     }
 
 #ifdef CONFIG_KSU_SELINUX_HIDE_DEFAULT_ON
-    /* Ship selinux_hide forced on, independent of the manager. An explicit
-     * force_feature= cmdline entry (parsed earlier) takes precedence. Applied
-     * and retried by ksu_feature_apply_forced() once the backup policy is up. */
-    if (!test_bit(KSU_FEATURE_SELINUX_HIDE, forced_mask)) {
+    /* Default selinux_hide on at boot WITHOUT locking it: seed the pending
+     * apply (retried by ksu_feature_apply_forced() once the backup policy is
+     * up) but not forced_mask, so the manager can still toggle it off. An
+     * explicit force_feature=selinux_hide:... entry sets forced_mask/pending
+     * first and takes precedence (and would lock it). */
+    if (!test_bit(KSU_FEATURE_SELINUX_HIDE, forced_mask) &&
+        !test_bit(KSU_FEATURE_SELINUX_HIDE, forced_pending)) {
         forced_values[KSU_FEATURE_SELINUX_HIDE] = 1;
-        set_bit(KSU_FEATURE_SELINUX_HIDE, forced_mask);
         set_bit(KSU_FEATURE_SELINUX_HIDE, forced_pending);
-        pr_info("feature: selinux_hide forced on by build config\n");
+        pr_info("feature: selinux_hide default-on (toggleable) by build config\n");
     }
 #endif
 
