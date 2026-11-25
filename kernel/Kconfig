@@ -77,6 +77,18 @@ config KSU_MULTI_MANAGER_SUPPORT
 	help
 		Enable multi KernelSU manager support
 
+config KSU_SELINUX_HIDE_DEFAULT_ON
+	bool "Force selinux_hide on at boot (no manager needed)"
+	depends on KSU
+	default n
+	help
+	  Seed the forced-feature table so the selinux_hide feature is
+	  enabled automatically at boot through ksu_feature_apply_forced(),
+	  with no dependency on the userspace manager. Because the feature
+	  is marked forced, the manager can no longer toggle it.
+
+	  Say Y to ship a kernel with selinux_hide preconfigured on.
+
 choice
 	prompt "KernelSU Hooking Method"
 	depends on KSU
@@ -92,18 +104,6 @@ config KSU_TRACEPOINT_HOOK
 	  Utilizes GKI tracepoints for syscall redirection. 
 	  The implementation is only for devices with GKI2 support.
 	  Support for kernel 5.10+
-
-config KSU_SELINUX_HIDE_DEFAULT_ON
-	bool "Force selinux_hide on at boot (no manager needed)"
-	depends on KSU
-	default n
-	help
-	  Seed the forced-feature table so the selinux_hide feature is
-	  enabled automatically at boot through ksu_feature_apply_forced(),
-	  with no dependency on the userspace manager. Because the feature
-	  is marked forced, the manager can no longer toggle it.
-
-	  Say Y to ship a kernel with selinux_hide preconfigured on.
 
 config KSU_MANUAL_HOOK
 	bool "Manually hook KernelSU"
